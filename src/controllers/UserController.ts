@@ -1,8 +1,21 @@
 import express from 'express';
 import { ZodError } from 'zod';
-import { createUser } from '../models/User';
+import { createUser, findUserById } from '../models/User';
 
 const UserController = express.Router();
+
+UserController.get('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const user = await findUserById(id);
+    if (!user) {
+      return res.status(404).send();
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json({ error });
+  }
+});
 
 UserController.post('/', async (req, res) => {
   try {

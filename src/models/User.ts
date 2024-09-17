@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Prisma } from '@prisma/client';
 import {
   literal, object, string, union,
@@ -25,6 +24,10 @@ const UserCreateInput = object({
       message: 'Must contain at least one uppercase letter (A-Z)',
     }),
 });
+
+export async function findUserById(id: number) {
+  return prisma.user.findUnique({ where: { id } });
+}
 
 export async function createUser(input: Prisma.UserCreateInput) {
   const { success, data, error } = UserCreateInput.safeParse(input);
