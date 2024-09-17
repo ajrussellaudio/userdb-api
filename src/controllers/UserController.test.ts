@@ -44,6 +44,71 @@ describe('UserController', () => {
       .end(done);
   });
 
+  it('rejects a missing name', async () => {
+    const response = await request(app)
+      .post('/users')
+      .send({
+        ...VALID_USER_INPUT,
+        name: undefined,
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(422);
+    expect(response.body.error.fieldErrors.name[0]).toEqual('Required');
+  });
+
+  it('rejects a missing email', async () => {
+    const response = await request(app)
+      .post('/users')
+      .send({
+        ...VALID_USER_INPUT,
+        email: undefined,
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(422);
+    expect(response.body.error.fieldErrors.email[0]).toEqual('Required');
+  });
+
+  it('rejects a missing user type', async () => {
+    const response = await request(app)
+      .post('/users')
+      .send({
+        ...VALID_USER_INPUT,
+        type: undefined,
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(422);
+    expect(response.body.error.fieldErrors.type[0]).toEqual('Invalid input');
+  });
+
+  it('rejects an invalid user type', async () => {
+    const response = await request(app)
+      .post('/users')
+      .send({
+        ...VALID_USER_INPUT,
+        type: 'CAPED_CRUSADER',
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(422);
+    expect(response.body.error.fieldErrors.type[0]).toEqual('Invalid input');
+  });
+
+  it('rejects a missing password', async () => {
+    const response = await request(app)
+      .post('/users')
+      .send({
+        ...VALID_USER_INPUT,
+        password: undefined,
+      })
+      .set('Accept', 'application/json');
+
+    expect(response.status).toEqual(422);
+    expect(response.body.error.fieldErrors.password[0]).toEqual('Required');
+  });
+
   it('rejects a password too short', async () => {
     const response = await request(app)
       .post('/users')

@@ -1,22 +1,20 @@
 /* eslint-disable import/prefer-default-export */
 import { Prisma } from '@prisma/client';
-import { z } from 'zod';
+import {
+  literal, object, string, union,
+} from 'zod';
 import prisma from '../../prisma/client';
 
-const UserCreateInput = z.object({
-  name: z.string(),
-  email: z.string(),
-  type: z.union(
-    [
-      z.literal('TEACHER'),
-      z.literal('STUDENT'),
-      z.literal('PARENT'),
-      z.literal('PRIVATE_TUTOR'),
-    ],
-    { message: 'Invalid user type' },
-  ),
-  password: z
-    .string()
+const UserCreateInput = object({
+  name: string(),
+  email: string(),
+  type: union([
+    literal('TEACHER'),
+    literal('STUDENT'),
+    literal('PARENT'),
+    literal('PRIVATE_TUTOR'),
+  ]),
+  password: string()
     .min(8, { message: 'Must be 8 characters or more' })
     .max(64, { message: 'Must be 64 characters or less' })
     .regex(/\d/, { message: 'Must contain at least one digit (0-9)' })
