@@ -1,4 +1,5 @@
 import express from 'express';
+import { ZodError } from 'zod';
 import { createUser } from '../models/User';
 
 const UserController = express.Router();
@@ -6,11 +7,12 @@ const UserController = express.Router();
 UserController.post('/', async (req, res) => {
   try {
     const newUser = await createUser(req.body);
-    res.status(201).json(newUser);
+    return res.status(201).json(newUser);
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    res.status(500).json({ error });
+    if (error instanceof ZodError) {
+      return res.status(422).json({ error: error.flatten() });
+    }
+    return res.status(500).json({ error });
   }
 });
 
