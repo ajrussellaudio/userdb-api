@@ -20,3 +20,4 @@ Thumbs.db
 
 ## Database
 *.db
+*.db-journal
