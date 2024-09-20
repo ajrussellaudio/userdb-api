@@ -1,90 +1,104 @@
-# Twinkl TypeScript Test
+# User DB API
 
-- [Task](#task)
-- [Development Environment Setup](#setup)
-- [What we are looking for](#what-we-are-looking-for)
+This is a backend tech test for a company who would likely rather not appear on Google. Rhymes with Wrinkle.
 
-## Task
+This document contains instructions for running the app locally, and a discussion of the development process.
 
-Your task is to implement a backend API (no front-end is required).
+## Local setup
 
-These are the requirements for the system:
+After cloning the repo, install dependencies:
 
-1. User Signup Endpoint
-    1. A `POST` endpoint, that accepts JSON, containing the user full name, password, email address, created date, and the user type (one of a student, teacher, parent or private tutor).
-    1. Validation. The app should check that the fields submitted are not empty. The app should also check that the password matches the following rules:
-        1. Between 8 and 64 characters
-        1. Must contain at least one digit (0-9)
-        1. Must contain at least one lowercase letter (a-z)
-        1. Must contain at least one uppercase letter (A-Z)
-    1. When validation fails the app should return an appropriate status code with error/s that can be used by the client
-1. Save the signup information to a data store. We recommend an in-memory data store (i.e an array) or a lightweight file database like SQLLite.
-1. User Signup Details
-    1. A `GET` endpoint that takes a user ID and returns the user details as JSON.
-1. Create whatever level of testing and documentation you consider appropriate
-
-## What we are looking for
-
-* Submit something that we can run locally
-* Commiting changes with good messages as you go is very helpful
-* You can update the README or add a NOTES.md detailing any decisions/tradeoffs you made, or changes you would make with more time
-* Clean, secure, modular code written to your own standards of what good looks like. Add concise comments in the code if you want to explain a decision. 
-* Pragmatism. We are not looking for complex solutions, and there is no hidden trick requirement in our task ;) 
-* Feel free to install and use additional packages
-
-## Setup
-
-### Prerequisites
-
-Before you begin, ensure you have the following installed on your machine:
-
-- [Node.js](https://nodejs.org/): Ensure that Node.js, preferably version 16 or higher, is installed on your system, as this project utilizes the latest versions of TypeScript and Nodemon.
-- [npm](https://www.npmjs.com/): npm is the package manager for Node.js and comes with the Node.js installation.
-
-### Installation
-
-This will install a basic [Express](https://expressjs.com/) app with Typescript.
-
-If you have been provided with a Github URL, clone the repository to your local machine:
-
-```
-git clone https://github.com/twinkltech/twinkl-typescript-tech-test.git
+```bash
+npm install
 ```
 
-If you have been provided with a zip file, download to your computer and unzip.
+The app is built with [Prisma](https://www.prisma.io/) as an ORM. Prisma requires a `DATABASE_URL` value in the environment, and migrations to set up the database tables.
 
-Navigate to the directory:
-
-```
-cd twinkl-typescript-tech-test
-```
-
-Install the dependencies:
-
-```
-npm i
+```bash
+# copy the example environment values to the real deal
+cp .env.example .env
+# run migrations
+npx prisma migrate dev
 ```
 
-### Usage
+Optionally, the database can be seeded with some rows once Prisma has been set up.
 
-In development the following command will start the server and use `nodemon` to auto-reload the server based on file changes
-
+```bash
+# optional
+npx ts-node script.ts
 ```
+
+If successful, a list of objects representing the created rows will be logged to the console.
+
+Finally the app can be run in dev mode:
+
+```bash
 npm run dev
 ```
 
-The server will start at `http://localhost:3000` by default. You can change the port in `src/index.ts` 
+## Automated testing
 
-There are no tests in the project at the moment, but a command is available to run:
+Run tests:
 
-```
-npm run test
-```
-
-There are also commands to build and start a server without nodemon:
-
-```
-npm run build
-npm start
+```bash
+npm test
 ```
 
+## Manual testing with Bruno
+
+The `/bruno` folder contains queries which can be opened with [Bruno](https://www.usebruno.com/) (similar to Postman, Insomnia...).
+
+- Install Bruno (`brew install bruno` works)
+- From the top-left `...` menu select "Open Collection" and navigate to this repo's `/bruno` folder. Open the whole folder.
+- Each tab contains a query.
+- Run a query with the → right arrow button to the right of the window.
+
+## Manual testing with something else
+
+There are two endpoints:
+
+### `POST /api/v1/users`
+
+Expects a JSON body, for example:
+
+```json
+{
+  "name": "Alan",
+  "email": "alan@hireme.io",
+  "password": "Hunter22",
+  "type": "TEACHER"
+}
+```
+
+Possible values for `type` are:
+
+- `"TEACHER"`
+- `"STUDENT"`
+- `"PARENT"`
+- `"PRIVATE_TUTOR"`
+
+On success the API responds with status code `201` and the created object (omitting the password for security).
+
+If fields are missing or invalid the API responds with status code `422` and error messages.
+
+### `GET /api/v1/users/:id`
+
+IDs are sequential numbers starting from 1 and are not reassigned if deleted.
+
+Responds with status code `200` and the user object if found (omitting the password for security).
+
+If the ID is not found, responds with a `404` status code and no body.
+
+## Notes
+
+The app is a bare Express app, roughly following an MVC architecture, with [Prisma](https://www.prisma.io/) as an ORM.
+
+My Node API framework of choice is normally [Nest.js](https://nestjs.com/), but it felt like overkill for this project.
+
+The User model (`/src/models/User.ts`) is just a couple of functions to encapsulate Prisma operations. Input validation is handled here with [Zod](https://zod.dev/), including the password requirements detailed in the brief. This file could easily have been a class but again, it felt like overkill for the requirements. If the User required full CRUD functionality the model would have been a class.
+
+The UserController (`/src/controllers/UserController.ts`) defines the endpoint URLs, delegates to the User model for DB operations and sends the appropriate HTTP responses.
+
+The UserController tests (`/src/controllers/UserController.test.ts`) use [Supertest](https://www.npmjs.com/package/supertest) to test the API endpoints with a mocked Prisma instance. Valid inputs and responses are tested, with the password requirements tested for appropriate failures.
+
+The only limitation of Prisma here was that it does not support enum data types for SQLite, only for PostgreSQL and MS SQL Server ([related issue](https://github.com/prisma/prisma/issues/2219)). An enum is technically the right choice for the `user.type` field, but since it is not possible here the data type had to be a `String` with the validation happening in the application layer. It's not optimal but it works.
