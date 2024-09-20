@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "userdb-queries",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
